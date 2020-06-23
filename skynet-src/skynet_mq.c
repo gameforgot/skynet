@@ -134,6 +134,9 @@ skynet_mq_overload(struct message_queue *q) {
 	return 0;
 }
 
+/*
+ * @func:	从一个actor的环形队列中弹出一条消息
+ */
 int
 skynet_mq_pop(struct message_queue *q, struct skynet_message *message) {
 	int ret = 1;

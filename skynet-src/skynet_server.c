@@ -257,6 +257,11 @@ skynet_isremote(struct skynet_context * ctx, uint32_t handle, int * harbor) {
 	return ret;
 }
 
+/*
+ * @func:	actor的消息处理函数
+ * @ctx:	actor的上下文(包括有回调函数，回调参数等)
+ * @msg:	具体消息
+ */
 static void
 dispatch_message(struct skynet_context *ctx, struct skynet_message *msg) {
 	assert(ctx->init);
@@ -293,6 +298,9 @@ skynet_context_dispatchall(struct skynet_context * ctx) {
 	}
 }
 
+/*
+ * @func:	从一级消息队列中取出某个actor下面的队列
+ */
 struct message_queue * 
 skynet_context_message_dispatch(struct skynet_monitor *sm, struct message_queue *q, int weight) {
 	if (q == NULL) {
@@ -313,6 +321,7 @@ skynet_context_message_dispatch(struct skynet_monitor *sm, struct message_queue 
 	int i,n=1;
 	struct skynet_message msg;
 
+	// 从q队列中取具体消息出来执行
 	for (i=0;i<n;i++) {
 		if (skynet_mq_pop(q,&msg)) {
 			skynet_context_release(ctx);
@@ -331,6 +340,7 @@ skynet_context_message_dispatch(struct skynet_monitor *sm, struct message_queue 
 		if (ctx->cb == NULL) {
 			skynet_free(msg.data);
 		} else {
+			// 处理消息
 			dispatch_message(ctx, &msg);
 		}
 
@@ -338,6 +348,7 @@ skynet_context_message_dispatch(struct skynet_monitor *sm, struct message_queue 
 	}
 
 	assert(q == ctx->queue);
+	// 弹出next queue，将当前q放入一级Q的tail，这样做是为了让一级Q里面的所有q都能公平占用CPU
 	struct message_queue *nq = skynet_globalmq_pop();
 	if (nq) {
 		// If global mq is not empty , push q back, and return next queue (nq)

@@ -160,6 +160,7 @@ thread_worker(void *p) {
 	skynet_initthread(THREAD_WORKER);
 	struct message_queue * q = NULL;
 	while (!m->quit) {
+		// 从全局消息队列中取消息并执行
 		q = skynet_context_message_dispatch(sm, q, weight);
 		if (q == NULL) {
 			if (pthread_mutex_lock(&m->mutex) == 0) {
@@ -183,11 +184,11 @@ static void
 start(int thread) {
 	pthread_t pid[thread+3];
 
+	// 提供监控线程需要的结构体
 	struct monitor *m = skynet_malloc(sizeof(*m));
 	memset(m, 0, sizeof(*m));
 	m->count = thread;
 	m->sleep = 0;
-
 	m->m = skynet_malloc(thread * sizeof(struct skynet_monitor *));
 	int i;
 	for (i=0;i<thread;i++) {
@@ -206,7 +207,7 @@ start(int thread) {
 	create_thread(&pid[1], thread_timer, m);
 	create_thread(&pid[2], thread_socket, m);
 
-	static int weight[] = { 
+	static int weight[] = {
 		-1, -1, -1, -1, 0, 0, 0, 0,
 		1, 1, 1, 1, 1, 1, 1, 1, 
 		2, 2, 2, 2, 2, 2, 2, 2, 
@@ -223,8 +224,10 @@ start(int thread) {
 		create_thread(&pid[i+3], thread_worker, &wp[i]);
 	}
 
+	// 阻塞等待所有线程返回
+	// 注意有3个非工作线程：monitor, timer, socket
 	for (i=0;i<thread+3;i++) {
-		pthread_join(pid[i], NULL); 
+		pthread_join(pid[i], NULL);
 	}
 
 	free_monitor(m);
@@ -244,6 +247,9 @@ bootstrap(struct skynet_context * logger, const char * cmdline) {
 	}
 }
 
+/*
+ * @func:	根据配置参数启动skynet
+ */
 void 
 skynet_start(struct skynet_config * config) {
 	// register SIGHUP for log file reopen
@@ -273,7 +279,7 @@ skynet_start(struct skynet_config * config) {
 	}
 
 	skynet_handle_namehandle(skynet_context_handle(ctx), "logger");
-
+	// 启动第一个service
 	bootstrap(ctx, config->bootstrap);
 
 	start(config->thread);

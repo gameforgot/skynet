@@ -365,6 +365,9 @@ clear_wb_list(struct wb_list *list) {
 	list->tail = NULL;
 }
 
+/*
+ * @func:	创建全局的socket server
+ */
 struct socket_server * 
 socket_server_create(uint64_t time) {
 	int i;

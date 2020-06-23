@@ -137,6 +137,7 @@ main(int argc, char *argv[]) {
 	luaL_initcodecache();
 #endif
 
+	// 这里创建一个luaState是为了加载配置文件(.lua)
 	struct lua_State *L = luaL_newstate();
 	luaL_openlibs(L);	// link lua lib
 
@@ -150,8 +151,9 @@ main(int argc, char *argv[]) {
 		lua_close(L);
 		return 1;
 	}
+	// 根据刚刚加载的配置初始化环境变量
 	_init_env(L);
-
+	// 设置好配置参数
 	config.thread =  optint("thread",8);
 	config.module_path = optstring("cpath","./cservice/?.so");
 	config.harbor = optint("harbor", 1);
@@ -162,7 +164,7 @@ main(int argc, char *argv[]) {
 	config.profile = optboolean("profile", 1);
 
 	lua_close(L);
-
+	// 根据配置参数skynet
 	skynet_start(&config);
 	skynet_globalexit();
 
